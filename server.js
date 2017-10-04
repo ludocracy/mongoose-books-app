@@ -37,9 +37,19 @@ app.get('/', function (req, res) {
 app.get('/api/books', function (req, res) {
   // send all books as JSON response
   console.log('books index');
-  db.Book.find(function(err, books) {
+  db.Book.find().populate('author').exec(function(err, books) {
     if(err) throw err;
     res.json(books);
+  });
+});
+
+// get all authors
+app.get('/api/authors', function (req, res) {
+  // send all books as JSON response
+  console.log('authors index');
+  db.Author.find(function(err, authors) {
+    if(err) throw err;
+    res.json(authors);
   });
 });
 
@@ -47,10 +57,19 @@ app.get('/api/books', function (req, res) {
 app.get('/api/books/:id', function (req, res) {
   // find one book by its id
   console.log('books show', req.params);
-  db.Book.findById(req.params.id, function(err, foundBook) {
+  db.Book.findById(req.params.id).populate('author').exec(function(err, foundBook) {
     if(err) throw err;
     res.json(foundBook);
   });
+});
+
+// get one author
+app.get('/api/author/:id', function(req, res) {
+console.log('authors show', req.params);
+  db.Author.findById(req.params.id, function(err, foundAuthor) {
+    if(err) throw err;
+    res.json(foundAuthor);
+  })
 });
 
 // create new book
@@ -59,9 +78,14 @@ app.post('/api/books', function (req, res) {
   console.log('books create', req.body);
 
   var newBook = db.Book(getBookInfo(req.body));
-  newBook.save(function(err, book) {
-    if(err) throw err;
-    res.json(book);
+  db.Author.findOne({name: req.body.author}, function(err, foundAuthor) {
+    if(!err) {
+      newBook.author = foundAuthor;
+    }
+    newBook.save(function(err, savedBook) {
+      if(err) throw err;
+      res.json(book);
+    });
   });
 });
 
